@@ -5,7 +5,7 @@ services:
     restart: always
     environment:
       # load default examples or not
-      - AIRFLOW__CORE__LOAD_EXAMPLES=True
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
     command: airflow standalone
     volumes:
       - ./dags:/opt/airflow/dags

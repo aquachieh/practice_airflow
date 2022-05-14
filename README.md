@@ -29,10 +29,10 @@ airflow_1  | standalone | Login with username: admin  password: UtkWctbbuDYFtAvc
 or you can access the airflow container to create your own role
 
 ```bash
-docker-compose -f docker-compose-local-executor.yaml exec airflow bash
+docker compose -f docker-compose-local-executor.yaml exec airflow bash
 
 # in container
-airflow users  create --role Admin --username penolove --email admin --firstname admin --lastname admin --password 5566isbest
+airflow users  create --role Admin --username uniqlo --email admin --firstname admin --lastname admin --password uniqlo
 ```
 
 ## examples
