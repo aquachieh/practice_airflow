@@ -46,9 +46,9 @@ def get_top_ten_products():
             sct_name = sct["name"]  # "男裝"
             sct_items = sct["props"][0]["props"]
             # print(sct_name, len(sct_items))
-            for item in sct_items:
+            for idx,item in enumerate(sct_items):
                 product_id = item["productCode"]
-                top10_list.append((product_id, sct_name))
+                top10_list.append((product_id,idx+1,sct_name))
     return top10_list
 
 
