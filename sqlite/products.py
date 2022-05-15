@@ -48,7 +48,7 @@ def fetch_ranking(key):
 keep_tracking_only = st.sidebar.radio("Keep is_tracking only?", [False, True])
 title_filter = st.sidebar.text_input('title_filter: filter title with given words')
 
-queue = st.columns(5)
+queue = st.columns(5)[::-1]
 
 for product_id, l1id, title, image_url, is_tracking, meta, appear_date in a:
 
@@ -66,7 +66,7 @@ for product_id, l1id, title, image_url, is_tracking, meta, appear_date in a:
         radio_index = 0
 
     if not queue:
-        queue.extend(st.columns(5))
+        queue.extend(st.columns(5)[::-1])
 
     col = queue.pop()
 
