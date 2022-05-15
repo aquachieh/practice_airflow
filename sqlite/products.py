@@ -45,10 +45,9 @@ def fetch_ranking(key):
     return df
 
 
+st.set_page_config(layout="wide")
 keep_tracking_only = st.sidebar.radio("Keep is_tracking only?", [False, True])
-title_filter = st.sidebar.text_input(
-    'title_filter: filter title with given words' 
-)
+title_filter = st.sidebar.text_input('title_filter: filter title with given words')
 
 queue = st.columns(5)
 
