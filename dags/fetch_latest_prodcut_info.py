@@ -10,7 +10,7 @@ from airflow.providers.sqlite.hooks.sqlite import SqliteHook
 
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"  # 使用者代理
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"  # noqa
 }
 
 
@@ -18,7 +18,7 @@ def get_newly_released_products():
     # [TODO]check meaningful sections and stores it
     # List[(product_id, section)]
 
-    query = "https://www.uniqlo.com/tw/data/config_1/zh_TW/women_new_arrival_51737.json?t=1630495061237"
+    query = "https://www.uniqlo.com/tw/data/config_1/zh_TW/women_new_arrival_51737.json?t=1630495061237"  # noqa
     response = requests.get(query, headers=headers)
     res = json.loads(response.text)
     items_list = []
@@ -47,9 +47,9 @@ def get_top_ten_products():
             sct_name = sct["name"]  # "男裝"
             sct_items = sct["props"][0]["props"]
             # print(sct_name, len(sct_items))
-            for idx,item in enumerate(sct_items):
+            for idx, item in enumerate(sct_items):
                 product_id = item["productCode"]
-                top10_list.append((product_id,idx+1,sct_name))
+                top10_list.append((product_id, idx + 1, sct_name))
     return top10_list
 
 
@@ -65,22 +65,25 @@ def fetch_product_info(product_id):
     if mainpic:
         image_url = f"https://www.uniqlo.com/tw{mainpic}"
     else:
-        image_url = f"https://www.uniqlo.com/tw/hmall/test/{product_id}/main/first/561/1.jpg"
+        image_url = (
+            f"https://www.uniqlo.com/tw/hmall/test/{product_id}/main/first/561/1.jpg"  # noqa
+        )
     # print (name, l1Id, price, image_url)
     return name, l1Id, price_tw, image_url
 
+
 def get_jp_price(pdid):
-    headers = {"Content-Type": "application/json",}
     query = f"https://www.uniqlo.com/jp/api/commerce/v5/ja/products?q={pdid}"
     response = requests.get(query, headers=headers)
     res = json.loads(response.text)
     items_list = res["result"]["items"]
-    for item in items_list:   # return first price
+    for item in items_list:  # return first price
         l1Id = item["l1Id"]
-        price_jp = item["prices"]["base"]["value"] 
+        price_jp = item["prices"]["base"]["value"]
         if pdid == l1Id:  # check id
             return price_jp
     return -1
+
 
 class DumpLatestProdsOperator(BaseOperator):
     @apply_defaults
@@ -100,7 +103,6 @@ class DumpLatestProdsOperator(BaseOperator):
             if prod_id not in set(prods_fetched['product_id_tw'])
         )
 
-
         prods_to_fetch |= set(
             prod_id
             for prod_id, *_ in top_ten_prods
@@ -112,18 +114,18 @@ class DumpLatestProdsOperator(BaseOperator):
         product_logs = []
         price_logs = []
         rank_logs = []
- 
-        for prod in prods_to_fetch:
+
+        for prod_id_tw in prods_to_fetch:
             time.sleep(0.05)
             try:
-                res = fetch_product_info(prod)
+                res = fetch_product_info(prod_id_tw)
 
                 title, l1id, price_tw, image_url = res
-                product_logs.append((prod, l1id, title, image_url, False, '', today_str))
+                product_logs.append((prod_id_tw, l1id, title, image_url, False, '', today_str))
 
-                price_jp = get_jp_price(prod)
-                price_logs.append((prod, today_str, price_tw, "TW", "TWD"))  # TW
-                price_logs.append((prod, today_str, price_jp, "JP", "JPY"))  # JP
+                price_jp = get_jp_price(l1id)
+                price_logs.append((prod_id_tw, today_str, price_tw, "TW", "TWD"))  # TW
+                price_logs.append((prod_id_tw, today_str, price_jp, "JP", "JPY"))  # JP
             except Exception as e:
                 print(e)
 
@@ -133,19 +135,18 @@ class DumpLatestProdsOperator(BaseOperator):
         sqlite_hook.insert_rows(table='UniqloProducts', rows=product_logs)
         sqlite_hook.insert_rows(table='UniqloProductPrice', rows=price_logs)
 
-
         # insert UniqloProductRanks
         for item in top_ten_prods:
-            prod, rank, section = item        
-            rank_logs.append((prod, today_str, rank, "TW")) 
-            
+            prod_id_tw, rank, section = item
+            rank_logs.append((prod_id_tw, today_str, rank, "TW"))
+
         sqlite_hook.insert_rows(table='UniqloProductRanks', rows=rank_logs)
         print(f"inserts {len(rank_logs)} rank_logs into db")
         return
 
 
 with DAG(
-    dag_id='fetch_latest_product_info',
+    dag_id='fetch-latest-product-info',
     start_date=datetime(2021, 1, 1),
     schedule_interval='@daily',
     tags=['uniqlo'],
