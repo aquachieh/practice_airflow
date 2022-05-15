@@ -5,7 +5,7 @@ from functools import partial
 import pandas as pd
 import streamlit as st
 
-
+st.set_page_config(layout="wide")
 conn = sqlite3.connect("sqlite_default.db")
 
 cursor = conn.cursor()
@@ -45,7 +45,6 @@ def fetch_ranking(key):
     return df
 
 
-st.set_page_config(layout="wide")
 keep_tracking_only = st.sidebar.radio("Keep is_tracking only?", [False, True])
 title_filter = st.sidebar.text_input('title_filter: filter title with given words')
 
