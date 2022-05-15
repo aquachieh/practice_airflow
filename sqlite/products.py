@@ -46,7 +46,7 @@ def fetch_ranking(key):
 
 
 keep_tracking_only = st.sidebar.radio("Keep is_tracking only?", [False, True])
-title_filter = st.text_input(
+title_filter = st.sidebar.text_input(
     'title_filter: filter title with given words' 
 )
 
