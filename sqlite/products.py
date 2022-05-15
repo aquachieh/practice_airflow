@@ -53,7 +53,7 @@ queue = st.columns(5)
 for product_id, l1id, title, image_url, is_tracking, meta, appear_date in a:
 
     display_title = f"{title}, {l1id}, {appear_date}"
-    if title_filter and not (title_filter not in display_title):
+    if title_filter and (title_filter not in display_title):
         continue
 
     if isinstance(is_tracking, str) and is_tracking == 'True':
