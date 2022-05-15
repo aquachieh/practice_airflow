@@ -46,9 +46,17 @@ def fetch_ranking(key):
 
 
 keep_tracking_only = st.sidebar.radio("Keep is_tracking only?", [False, True])
+title_filter = st.text_input(
+    'title_filter: filter title with given words' 
+)
+
 queue = st.columns(5)
 
 for product_id, l1id, title, image_url, is_tracking, meta, appear_date in a:
+
+    display_title = f"{title}, {l1id}, {appear_date}"
+    if title_filter and not (title_filter not in display_title):
+        continue
 
     if isinstance(is_tracking, str) and is_tracking == 'True':
         radio_index = 1
@@ -65,7 +73,7 @@ for product_id, l1id, title, image_url, is_tracking, meta, appear_date in a:
     col = queue.pop()
 
     with col:
-        st.text(title)
+        st.text(display_title)
         st.image(image_url)
         is_clicked = st.button('get-detail', key=product_id)
         genre = st.radio(
