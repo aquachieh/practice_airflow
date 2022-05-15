@@ -48,7 +48,7 @@ with DAG(
     create_product_rank_table = SqliteOperator(
         task_id='create_uniqlo_product_rank_sqlite',
         sql=r"""
-        CREATE TABLE ProductRanks (
+        CREATE TABLE UniqloProductRanks (
             product_id_tw TEXT,
             date TEXT,
             rank INTEGER,
@@ -58,6 +58,8 @@ with DAG(
         """,
         dag=dag,
     )
+
+
 
     create_uniqlo_product_table >> create_product_price_table
     create_uniqlo_product_table >> create_product_rank_table

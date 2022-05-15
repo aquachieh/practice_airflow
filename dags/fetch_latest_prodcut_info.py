@@ -1,6 +1,7 @@
 import requests
 import json
 from datetime import datetime
+import time
 
 from airflow import DAG
 from airflow.models.baseoperator import BaseOperator
@@ -59,15 +60,27 @@ def fetch_product_info(product_id):
     res = r.json()
     name = res["name"]
     l1Id = res["code"]
-    price = res["minPrice"]  # minprice
+    price_tw = res["minPrice"]  # minprice
     mainpic = res.get("mainPic")
     if mainpic:
         image_url = f"https://www.uniqlo.com/tw{mainpic}"
     else:
         image_url = f"https://www.uniqlo.com/tw/hmall/test/{product_id}/main/first/561/1.jpg"
     # print (name, l1Id, price, image_url)
-    return name, l1Id, price, image_url
+    return name, l1Id, price_tw, image_url
 
+def get_jp_price(pdid):
+    headers = {"Content-Type": "application/json",}
+    query = f"https://www.uniqlo.com/jp/api/commerce/v5/ja/products?q={pdid}"
+    response = requests.get(query, headers=headers)
+    res = json.loads(response.text)
+    items_list = res["result"]["items"]
+    for item in items_list:   # return first price
+        l1Id = item["l1Id"]
+        price_jp = item["prices"]["base"]["value"] 
+        if pdid == l1Id:  # check id
+            return price_jp
+    return -1
 
 class DumpLatestProdsOperator(BaseOperator):
     @apply_defaults
@@ -86,6 +99,8 @@ class DumpLatestProdsOperator(BaseOperator):
             for prod_id, *_ in new_prods
             if prod_id not in set(prods_fetched['product_id_tw'])
         )
+
+
         prods_to_fetch |= set(
             prod_id
             for prod_id, *_ in top_ten_prods
@@ -94,19 +109,38 @@ class DumpLatestProdsOperator(BaseOperator):
 
         # the date
         today_str = datetime.today().strftime('%Y-%m-%d')
-        logs = []
+        product_logs = []
+        price_logs = []
+        rank_logs = []
+ 
         for prod in prods_to_fetch:
+            time.sleep(0.05)
             try:
                 res = fetch_product_info(prod)
 
-                title, l1id, _, image_url = res
-                logs.append((prod, l1id, title, image_url, False, '', today_str))
+                title, l1id, price_tw, image_url = res
+                product_logs.append((prod, l1id, title, image_url, False, '', today_str))
+
+                price_jp = get_jp_price(prod)
+                price_logs.append((prod, today_str, price_tw, "TW", "TWD"))  # TW
+                price_logs.append((prod, today_str, price_jp, "JP", "JPY"))  # JP
             except Exception as e:
                 print(e)
 
-        print(f"inserts {len(logs)} logs into db")
+        print(f"inserts {len(product_logs)} product_logs into db")
+        print(f"inserts {len(price_logs)} price_logs into db")
 
-        sqlite_hook.insert_rows(table='UniqloProducts', rows=logs)
+        sqlite_hook.insert_rows(table='UniqloProducts', rows=product_logs)
+        sqlite_hook.insert_rows(table='UniqloProductPrice', rows=price_logs)
+
+
+        # insert UniqloProductRanks
+        for item in top_ten_prods:
+            prod, rank, section = item        
+            rank_logs.append((prod, today_str, rank, "TW")) 
+            
+        sqlite_hook.insert_rows(table='UniqloProductRanks', rows=rank_logs)
+        print(f"inserts {len(rank_logs)} rank_logs into db")
         return
 
 
