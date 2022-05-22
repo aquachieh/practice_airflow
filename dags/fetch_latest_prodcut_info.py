@@ -14,11 +14,20 @@ headers = {
 }
 
 
+def get_latest_prop_json_name(prop):
+    query = "https://www.uniqlo.com/tw/data/config_1/zh_TW/cms-mobile-config.json"
+    response = requests.get(query, headers=headers)
+    res = json.loads(response.text)
+    props = res['pages'][prop]['props'][-1]
+    filename = f"{props['componentsPath']}?t={props['startDate']}"
+    return filename
+
+
 def get_newly_released_products():
     # [TODO]check meaningful sections and stores it
     # List[(product_id, section)]
-
-    query = "https://www.uniqlo.com/tw/data/config_1/zh_TW/women_new_arrival_51737.json?t=1630495061237"  # noqa
+    filename = get_latest_prop_json_name('/home/women_new_arrival')
+    query = f"https://www.uniqlo.com/tw/data/config_1/zh_TW/{filename}"  # noqa
     response = requests.get(query, headers=headers)
     res = json.loads(response.text)
     items_list = []
@@ -36,9 +45,8 @@ def get_newly_released_products():
 def get_top_ten_products():
     # [TODO] check meaningful sections
     # [(product_id, rank, section)]
-    top_10_query = (
-        "https://www.uniqlo.com/tw/data/config_1/zh_TW/top_10_51605.json?t=1630495061237"
-    )
+    filename = get_latest_prop_json_name('/home/top_10')
+    top_10_query = f"https://www.uniqlo.com/tw/data/config_1/zh_TW/{filename}"
     response = requests.get(top_10_query, headers=headers)
     res = json.loads(response.text)
     top10_list = []
